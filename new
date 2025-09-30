@@ -1,0 +1,481 @@
+{
+  "name": "Agente Exemplo",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "375933df-7a7e-48a9-a9dd-283b75629924",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -448,
+        96
+      ],
+      "id": "6d6206b8-6404-4191-ac88-1faae04954ba",
+      "name": "Webhook",
+      "webhookId": "375933df-7a7e-48a9-a9dd-283b75629924"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.chatInput }}",
+        "options": {
+          "systemMessage": "=Prompt",
+          "maxIterations": 50
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.8,
+      "position": [
+        896,
+        192
+      ],
+      "id": "a8cb31f9-8467-4488-9b9c-f9dd5c773fde",
+      "name": "AI Agent",
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1248,
+        192
+      ],
+      "id": "13d517b1-69c2-49da-a83f-97166b21c040",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        672,
+        384
+      ],
+      "id": "74707104-9ed2-48f6-9d18-d3a3d9218ffa",
+      "name": "Chat",
+      "webhookId": "1d06c6d2-69b1-4d57-b57d-16c9ef95a244"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.sessionId }}",
+        "tableName": "chats",
+        "contextWindowLength": 15
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1.3,
+      "position": [
+        1032,
+        416
+      ],
+      "id": "c73a200d-b40d-441a-a1d6-36f4903628b4",
+      "name": "Postgres Chat Memory",
+      "credentials": {
+        "postgres": {
+          "id": "JbzEi6EfGZk1c4LT",
+          "name": "Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {
+          "topP": 1
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        904,
+        416
+      ],
+      "id": "5ddf4bf1-b554-4c96-bbf0-fb0d8ce6f999",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "HvYBld2BMYetYjXO",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "chat-api",
+        "operation": "get-media-base64",
+        "instanceName": "caravieri",
+        "messageId": "={{ $json.body.chatInput.split(\"|\")[1] }}"
+      },
+      "type": "n8n-nodes-evolution-api.evolutionApi",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "d1bb91a7-7a4a-4a78-9535-d322cc004cc8",
+      "name": "Obter m dia em base64",
+      "credentials": {
+        "evolutionApi": {
+          "id": "McJlJQiwymMHFtCX",
+          "name": "Evolution account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.body.chatInput }}",
+                    "rightValue": "imageMessage|",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    },
+                    "id": "0c3066ff-66af-4f26-97e1-8a2e1674b6a6"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Imagem"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "9e6e915c-7048-4779-9f3c-06beb343b9ec",
+                    "leftValue": true,
+                    "rightValue": "",
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "true",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Mensagem"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        -224,
+        96
+      ],
+      "id": "0840fa19-3ccf-420a-89a0-106c8d4ccc0b",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "operation": "analyze",
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "text": "Descreva Essa imagem",
+        "inputType": "binary",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        448,
+        0
+      ],
+      "id": "28a4f4fd-68b3-41d6-856e-3b12d1e12eaa",
+      "name": "Analyze image",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "HvYBld2BMYetYjXO",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "toBinary",
+        "sourceProperty": "data.base64",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        224,
+        0
+      ],
+      "id": "dbb1fffe-5a7e-4f66-9c9e-58a621f54d7d",
+      "name": "Convert to File"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "cd14260f-4c5b-4ea6-84ae-fca0ce0acb44",
+              "name": "chatInput",
+              "value": "=Imagem: {{ $json.content.parts[0].text }}, legenda: {{ $('Webhook').item.json.body.chatInput.split(\"|\")[2] }}",
+              "type": "string"
+            },
+            {
+              "id": "ed8dd2b9-0558-4f40-8580-7715cf46d29a",
+              "name": "sessionId",
+              "value": "={{ $('Webhook').item.json.body.sessionId }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        672,
+        0
+      ],
+      "id": "74facc8a-326a-4cb4-b79f-71114e5017d4",
+      "name": "Define Imagem e Legenda"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "cd14260f-4c5b-4ea6-84ae-fca0ce0acb44",
+              "name": "chatInput",
+              "value": "={{ $('Webhook').item.json.body.chatInput }}",
+              "type": "string"
+            },
+            {
+              "id": "5d010762-8008-402a-9633-b68314c1b1b5",
+              "name": "sessionId",
+              "value": "={{ $('Webhook').item.json.body.sessionId }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        672,
+        192
+      ],
+      "id": "d4addc3c-cab3-4655-9014-b8c04199d53d",
+      "name": "Define ChatInput"
+    }
+  ],
+  "pinData": {
+    "Webhook": [
+      {
+        "json": {
+          "headers": {
+            "host": "caravieri.up.railway.app",
+            "user-agent": "axios/1.10.0",
+            "content-length": "320",
+            "accept": "application/json, text/plain, */*",
+            "accept-encoding": "gzip, compress, deflate, br",
+            "content-type": "application/json",
+            "x-forwarded-for": "162.220.234.72",
+            "x-forwarded-host": "caravieri.up.railway.app",
+            "x-forwarded-proto": "https",
+            "x-railway-edge": "railway/us-east4-eqdc4a",
+            "x-railway-request-id": "S-ImwesOSruxvc8sozsQ6Q",
+            "x-real-ip": "162.220.234.72",
+            "x-request-start": "1758899834471"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "chatInput": "oi",
+            "sessionId": "5519992510632@s.whatsapp.net",
+            "remoteJid": "5519992510632@s.whatsapp.net",
+            "pushName": "Eduardo Carezia",
+            "keyId": "3B5B32C5778627C41982",
+            "fromMe": false,
+            "instanceName": "caravieri",
+            "serverUrl": "https://evolution-api-production-eca9.up.railway.app",
+            "apiKey": "A6C1E992C7F2-48F0-8088-8FA82A7B3A1B"
+          },
+          "webhookUrl": "https://caravieri.up.railway.app/webhook/375933df-7a7e-48a9-a9dd-283b75629924",
+          "executionMode": "production"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Chat": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres Chat Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Obter m dia em base64": {
+      "main": [
+        [
+          {
+            "node": "Convert to File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Obter m dia em base64",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Define ChatInput",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyze image": {
+      "main": [
+        [
+          {
+            "node": "Define Imagem e Legenda",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File": {
+      "main": [
+        [
+          {
+            "node": "Analyze image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Define Imagem e Legenda": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Define ChatInput": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "e05cec70-e5b6-4eef-989a-975fd6579e78",
+  "meta": {
+    "instanceId": "bae77abd40c28a198e36b775c22f84796e4e391b025a178075884c31cb075216"
+  },
+  "id": "j5ylG6oixYc0DkHh",
+  "tags": []
+}
